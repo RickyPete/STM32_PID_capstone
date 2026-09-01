@@ -1,0 +1,44 @@
+!SESSION 2026-09-01 18:49:15.820 -----------------------------------------------
+eclipse.buildId=Version 2.2.0
+java.version=21.0.10
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_CA
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-01 18:49:26.128
+!MESSAGE Log4j2 initialized with config file C:\Users\Eric\Capstone\STM32_PID_capstone\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-01 18:49:28.378
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-09-01 18:49:28.587
+!MESSAGE Executed PowerShell command powershell.exe -Command "Get-CimInstance -ClassName Win32_SerialPort | Select-Object -ExpandProperty DeviceID":
+
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-09-01 18:49:28.588
+!MESSAGE port: 
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-09-01 18:50:28.179
+!MESSAGE Indexed 'PID_code' (20 sources, 117 headers) in 2.5 sec: 11,057 declarations; 42,996 references; 1 unresolved inclusions; 92 syntax errors; 238 unresolved names (0.44%)
+
+!ENTRY org.eclipse.cdt.dsf 4 10005 2026-09-01 19:25:43.300
+!MESSAGE Request for monitor: 'RequestMonitor (org.eclipse.cdt.dsf.gdb.internal.ui.actions.DsfTerminateCommand$3$1@55a149d7): Status OK: unknown code=0 OK' resulted in a rejected execution exception.
+!SESSION 2026-09-01 19:30:03.780 -----------------------------------------------
+eclipse.buildId=Version 2.2.0
+java.version=21.0.10
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_CA
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-01 19:30:09.407
+!MESSAGE Log4j2 initialized with config file C:\Users\Eric\Capstone\STM32_PID_capstone\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-01 19:30:12.255
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-09-01 19:30:13.374
+!MESSAGE Executed PowerShell command powershell.exe -Command "Get-CimInstance -ClassName Win32_SerialPort | Select-Object -ExpandProperty DeviceID":
+
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-09-01 19:30:13.376
+!MESSAGE port: 
