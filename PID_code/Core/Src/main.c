@@ -23,6 +23,10 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "ssd1306.h"
+#include "ssd1306_conf.h"
+#include "ssd1306_fonts.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,9 +45,14 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+volatile int32_t encoder_count = 0;
+volatile uint32_t button_press_count = 0;
+volatile uint8_t last_AB_state = 0;
 
 /* USER CODE END PV */
 
@@ -51,6 +60,7 @@ UART_HandleTypeDef huart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -104,24 +114,42 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  ssd1306_Init();
+  ssd1306_Fill(Black);
+  ssd1306_UpdateScreen();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
   uint32_t now = 0, next_blink = 500;
+  uint32_t count = 0;
+  char buf[16];
 
   while (1)
   {
 
 	  now = uwTick;
+	  int32_t current_count = encoder_count;
+	  uint32_t presses = button_press_count;
 
 	  if (now >= next_blink)
 	  {
 		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 		  next_blink = now + 500;
+
+		  count = count + 1;
+		  sprintf(buf, "%-4lu", current_count);
+		  ssd1306_SetCursor(0, 0);
+		  ssd1306_WriteString(buf, Font_6x8, White);
+
+		  sprintf(buf, "%-4lu", presses);
+		  ssd1306_SetCursor(0, 10);
+		  ssd1306_WriteString(buf, Font_6x8, White);
+
+		  ssd1306_UpdateScreen();
 	  }
 
     /* USER CODE END WHILE */
@@ -177,6 +205,40 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -225,6 +287,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
@@ -236,11 +299,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BTN_Pin */
-  GPIO_InitStruct.Pin = BTN_Pin;
+  /*Configure GPIO pins : BTN_Pin PB_ENCA_Pin PB_ENCB_Pin PB_BTN_Pin */
+  GPIO_InitStruct.Pin = BTN_Pin|PB_ENCA_Pin|PB_ENCB_Pin|PB_BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BTN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -248,6 +321,67 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// Lookup table for quadrature decoding based on state transitions
+static const int8_t qem_table[16] = {
+     0, -1,  1,  0,
+     1,  0,  0, -1,
+    -1,  0,  0,  1,
+     0,  1, -1,  0
+};
+
+static int8_t encoder_seq = 0;      // accumulates sub-steps within one detent (x4 -> x1)
+static int8_t detent_accum = 0;     // accumulates detents until threshold reached
+#define COUNTS_PER_INCREMENT 5
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == PB_ENCA_Pin || GPIO_Pin == PB_ENCB_Pin)
+    {
+        uint8_t a = HAL_GPIO_ReadPin(GPIOA, PB_ENCA_Pin);
+        uint8_t b = HAL_GPIO_ReadPin(GPIOA, PB_ENCB_Pin);
+        uint8_t curr_AB = (a << 1) | b;
+        uint8_t index = (last_AB_state << 2) | curr_AB;
+        int8_t delta = qem_table[index & 0x0F];
+        if (delta != 0)
+        {
+            encoder_seq += delta;
+            if (encoder_seq >= 4)          // one full CW detent
+            {
+                encoder_seq = 0;
+                detent_accum++;
+            }
+            else if (encoder_seq <= -4)    // one full CCW detent
+            {
+                encoder_seq = 0;
+                detent_accum--;
+            }
+            if (detent_accum >= COUNTS_PER_INCREMENT)
+            {
+                detent_accum = 0;
+                encoder_count++;
+            }
+            else if (detent_accum <= -COUNTS_PER_INCREMENT)
+            {
+                detent_accum = 0;
+                if (encoder_count > 0) encoder_count--;
+            }
+        }
+        last_AB_state = curr_AB;
+    }
+    else if (GPIO_Pin == PB_BTN_Pin)
+    {
+        static uint32_t last_press_tick = 0;
+        uint32_t now = HAL_GetTick();
+        if (HAL_GPIO_ReadPin(GPIOA, PB_BTN_Pin) == GPIO_PIN_RESET)
+        {
+            if ((now - last_press_tick) > 50)
+            {
+                button_press_count++;
+                last_press_tick = now;
+            }
+        }
+    }
+}
 
 /* USER CODE END 4 */
 
