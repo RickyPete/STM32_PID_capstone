@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -59,8 +61,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
-#define BTN_Pin GPIO_PIN_0
-#define BTN_GPIO_Port GPIOA
 #define PB_ENCA_Pin GPIO_PIN_1
 #define PB_ENCA_GPIO_Port GPIOA
 #define PB_ENCA_EXTI_IRQn EXTI1_IRQn
@@ -70,6 +70,24 @@ void Error_Handler(void);
 #define PB_BTN_Pin GPIO_PIN_3
 #define PB_BTN_GPIO_Port GPIOA
 #define PB_BTN_EXTI_IRQn EXTI3_IRQn
+#define SPI1_CS_Pin GPIO_PIN_4
+#define SPI1_CS_GPIO_Port GPIOA
+#define SPI1_RST_Pin GPIO_PIN_0
+#define SPI1_RST_GPIO_Port GPIOB
+#define SPI1_D_C_Pin GPIO_PIN_1
+#define SPI1_D_C_GPIO_Port GPIOB
+#define NFAULT_Pin GPIO_PIN_10
+#define NFAULT_GPIO_Port GPIOB
+#define PWM_Pin GPIO_PIN_8
+#define PWM_GPIO_Port GPIOA
+#define M_ENCA_Pin GPIO_PIN_4
+#define M_ENCA_GPIO_Port GPIOB
+#define M_ENCB_Pin GPIO_PIN_5
+#define M_ENCB_GPIO_Port GPIOB
+#define PH_IN2_Pin GPIO_PIN_8
+#define PH_IN2_GPIO_Port GPIOB
+#define NSLEEP_Pin GPIO_PIN_9
+#define NSLEEP_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
